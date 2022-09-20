@@ -1,5 +1,8 @@
 # Folder
 /vendor
+.vscode/
 
 # File
 .env
+__debug_bin
+example.db
