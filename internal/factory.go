@@ -25,9 +25,12 @@ func (t Transport) GetTenantService(conf configs.Config) service.TenantService {
 
 func (t Transport) GetDatabaseRepo(conf configs.Config) database.DatabaseRepo {
 	if t.databaseRepo == nil {
-		// if conf.Driver == "sqlite3"{
-		db := database.NewSQLLiteDriver()
-		// }
+		var db database.DatabaseRepo
+		if conf.DBDriver == "sqlite3" {
+			db = database.NewSQLLiteDriver()
+		} else if conf.DBDriver == "postgres" {
+			db = database.NewPostgreDriver(conf)
+		}
 
 		t.databaseRepo = &db
 	}

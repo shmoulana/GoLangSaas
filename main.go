@@ -7,7 +7,8 @@ import (
 
 func main() {
 	// initialize config
-	conf := configs.Init()
+	configs.Init()
+	conf := configs.Get()
 
 	webservice.StartServer(*conf)
 }
