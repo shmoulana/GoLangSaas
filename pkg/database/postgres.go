@@ -120,18 +120,18 @@ func NewPostgreDriver(conf configs.Config) DatabaseRepo {
 		panic(err)
 	}
 
-	query := fmt.Sprintf("SELECT 'CREATE DATABASE %s' as column WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = '%s')", conf.DBName, conf.DBName)
-
-	row := db.QueryRowContext(context.Background(), query)
-
 	var column *string
 
+	// Find database if not exist return create database query
+	row := db.QueryRowContext(context.Background(), fmt.Sprintf("SELECT 'CREATE DATABASE %s' as column WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = '%s')", conf.DBName, conf.DBName))
 	err = row.Scan(
 		&column,
 	)
 
 	if err != nil {
-		panic(err)
+		if err != sql.ErrNoRows {
+			panic(err)
+		}
 	}
 
 	if column != nil {
