@@ -2,44 +2,79 @@ package service
 
 import (
 	"context"
+	"fmt"
 
-	"github.com/go-saas/saas"
-	"github.com/go-saas/saas/data"
 	"github.com/google/uuid"
+	"github.com/shmoulana/Redios/internal/repository"
 	"github.com/shmoulana/Redios/pkg/database"
 	"github.com/shmoulana/Redios/pkg/dto"
 )
 
 type TenantService struct {
-	DatabaseRepo database.DatabaseRepo
+	TenantRepository repository.TenantRepository
 }
 
 func (s TenantService) CreateTenant(ctx context.Context, payload dto.TenantRequestV1) error {
-	ctx = saas.NewCurrentTenant(ctx, "", "")
-	db, err := s.DatabaseRepo.GetDB(ctx)
-	if err != nil {
-		return err
-	}
-
-	isCreateNewTenant := payload.SeparateDb
-
 	t := &database.Tenant{
 		ID:          uuid.New().String(),
 		Name:        payload.Name,
 		DisplayName: payload.Name,
 	}
 
-	if isCreateNewTenant {
-		t3Conn, _ := s.DatabaseRepo.GetDSN().TenantDSN.Gen(ctx, saas.NewBasicTenantInfo(t.ID, t.Name))
-		t.Conn = []database.TenantConn{
-			{Key: data.Default, Value: t3Conn}, // use tenant3.db
-		}
+	lastInsertedId, err := s.TenantRepository.CreateTenant(ctx, *t, payload.SeparateDb)
+	if err != nil {
+		return nil
 	}
 
-	err = db.Model(t).Create(t).Error
-	if err != nil {
-		return err
-	}
+	fmt.Printf(*lastInsertedId)
 
 	return nil
+}
+
+func (s TenantService) UpdateTenant(ctx context.Context, id string, payload dto.TenantRequestV1) (*string, error) {
+	tenant, err := s.TenantRepository.FindById(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	tenant.Name = payload.Name
+
+	_, err = s.TenantRepository.UpdateTenant(ctx, *tenant)
+	if err != nil {
+		return nil, err
+	}
+
+	return &id, nil
+}
+
+func (s TenantService) GetTenants(ctx context.Context) ([]database.Tenant, error) {
+	tenants, err := s.TenantRepository.Find(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return tenants, nil
+}
+
+func (s TenantService) GetTenantById(ctx context.Context, id string) (*database.Tenant, error) {
+	tenant, err := s.TenantRepository.FindById(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	return tenant, err
+}
+
+func (s TenantService) DeleteTenant(ctx context.Context, id string) (*string, error) {
+	tenant, err := s.TenantRepository.FindById(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = s.TenantRepository.DeleteTenant(ctx, *tenant)
+	if err != nil {
+		return nil, err
+	}
+
+	return &id, nil
 }

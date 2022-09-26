@@ -14,6 +14,8 @@ func StartServer(conf configs.Config) {
 	route := router.NewRouter(router.NewRouterParams{
 		R:             r,
 		TenantService: fac.GetTenantService(conf),
+		UserService:   fac.GetUserService(conf),
+		Middleware:    fac.GetMiddleware(conf),
 	})
 
 	route.InitRouter()

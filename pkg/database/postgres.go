@@ -5,21 +5,23 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/go-saas/saas"
 	"github.com/go-saas/saas/data"
 	sgorm "github.com/go-saas/saas/gorm"
 	"github.com/go-saas/saas/seed"
-	_ "github.com/lib/pq"
+	_ "github.com/jackc/pgx/v5"
 	"github.com/shmoulana/Redios/configs"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
 
 type PostgreDriver struct {
-	DSN        DatabaseDSN
-	DBProvider *sgorm.DbProvider
-	conf       *configs.Config
+	DSN          DatabaseDSN
+	DBProvider   *sgorm.DbProvider
+	conf         *configs.Config
+	tenantPrefix string
 }
 
 func (d PostgreDriver) Connect(ctx context.Context) (*sgorm.DbProvider, error) {
@@ -38,13 +40,8 @@ func (d PostgreDriver) Connect(ctx context.Context) (*sgorm.DbProvider, error) {
 			psqlInfo := fmt.Sprintf("host=%s port=%s user=%s "+
 				"password=%s dbname=%s sslmode=disable", d.conf.DBHost, d.conf.DBPort, d.conf.DBUser, d.conf.DBPassword, d.conf.DBName)
 
-			db, err := sql.Open("postgres", psqlInfo)
-			if err != nil {
-				return nil, err
-			}
-
 			client, err = gorm.Open(postgres.New(postgres.Config{
-				Conn: db,
+				DSN: psqlInfo,
 			}))
 
 			return sgorm.NewDbWrap(client), err
@@ -95,8 +92,56 @@ func (d PostgreDriver) GetDSN() DatabaseDSN {
 	return d.DSN
 }
 
+func (d PostgreDriver) GetDriver() string {
+	return "postgres"
+}
+
+func (d PostgreDriver) GetTenantDSN(ctx context.Context, tenantInfo saas.TenantInfo) string {
+	t3Conn, _ := d.DSN.TenantDSN.Gen(ctx, tenantInfo)
+
+	return strings.ReplaceAll(t3Conn, "-", "_")
+}
+
+func (d PostgreDriver) CreateDatabase(ctx context.Context, id string) error {
+	//open without db name
+	psqlInfo := fmt.Sprintf("host=%s port=%s user=%s "+
+		"password=%s sslmode=disable", d.conf.DBHost, d.conf.DBPort, d.conf.DBUser, d.conf.DBPassword)
+
+	db, err := gorm.Open(postgres.New(postgres.Config{
+		DSN: psqlInfo,
+	}), &gorm.Config{})
+	if err != nil {
+		return err
+	}
+
+	dbName := fmt.Sprintf(d.tenantPrefix, id)
+	dbName = strings.ReplaceAll(dbName, "-", "_")
+
+	var column *string
+
+	// Find database if not exist return create database query
+	result := db.Raw(fmt.Sprintf("SELECT 'CREATE DATABASE %s' as column WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = '%s')", dbName, dbName))
+	err = result.Error
+	if err != nil {
+		if err != sql.ErrNoRows {
+			return err
+		}
+	}
+
+	result.Scan(&column)
+
+	if column != nil {
+		result := db.Exec(*column)
+		if result.Error != nil {
+			return result.Error
+		}
+	}
+
+	return nil
+}
+
 func NewPostgreDriver(conf configs.Config) DatabaseRepo {
-	hostDbName := conf.DBNameTenant
+	hostDbName := conf.DBNameTenant + "_%s"
 
 	psqlInfoTenant := fmt.Sprintf("host=%s port=%s user=%s "+
 		"password=%s dbname=%s sslmode=disable", conf.DBHost, conf.DBPort, conf.DBUser, conf.DBPassword, hostDbName)
@@ -115,7 +160,9 @@ func NewPostgreDriver(conf configs.Config) DatabaseRepo {
 	psqlInfo = fmt.Sprintf("host=%s port=%s user=%s "+
 		"password=%s sslmode=disable", conf.DBHost, conf.DBPort, conf.DBUser, conf.DBPassword)
 
-	db, err := sql.Open("postgres", psqlInfo)
+	db, err := gorm.Open(postgres.New(postgres.Config{
+		DSN: psqlInfo,
+	}), &gorm.Config{})
 	if err != nil {
 		panic(err)
 	}
@@ -123,28 +170,26 @@ func NewPostgreDriver(conf configs.Config) DatabaseRepo {
 	var column *string
 
 	// Find database if not exist return create database query
-	row := db.QueryRowContext(context.Background(), fmt.Sprintf("SELECT 'CREATE DATABASE %s' as column WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = '%s')", conf.DBName, conf.DBName))
-	err = row.Scan(
-		&column,
-	)
-
+	result := db.Raw(fmt.Sprintf("SELECT 'CREATE DATABASE %s' as column WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = '%s')", conf.DBName, conf.DBName))
+	err = result.Error
 	if err != nil {
 		if err != sql.ErrNoRows {
 			panic(err)
 		}
 	}
 
+	result.Scan(&column)
+
 	if column != nil {
-		_, err = db.ExecContext(context.Background(), *column)
-		if err != nil {
-			panic(err)
+		result := db.Exec(*column)
+		if result.Error != nil {
+			panic(result.Error)
 		}
 	}
 
-	db.Close()
-
 	return PostgreDriver{
-		DSN:  dsn,
-		conf: &conf,
+		DSN:          dsn,
+		conf:         &conf,
+		tenantPrefix: hostDbName,
 	}
 }

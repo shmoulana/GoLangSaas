@@ -8,13 +8,15 @@ import (
 )
 
 type Config struct {
-	DBDriver     string
-	DBHost       string
-	DBPort       string
-	DBUser       string
-	DBPassword   string
-	DBName       string
-	DBNameTenant string
+	DBDriver      string
+	DBHost        string
+	DBPort        string
+	DBUser        string
+	DBPassword    string
+	DBName        string
+	DBNameTenant  string
+	RsaPrivateKey string
+	RsaPublicKey  string
 }
 
 var config *Config
@@ -26,13 +28,15 @@ func Init() {
 	}
 
 	config = &Config{
-		DBDriver:     os.Getenv("DB_DRIVER"),
-		DBHost:       os.Getenv("DB_HOST"),
-		DBPort:       os.Getenv("DB_PORT"),
-		DBUser:       os.Getenv("DB_USER"),
-		DBPassword:   os.Getenv("DB_PASSWORD"),
-		DBName:       os.Getenv("DB_DBNAME"),
-		DBNameTenant: os.Getenv("DB_DBNAME_TENANT"),
+		DBDriver:      os.Getenv("DB_DRIVER"),
+		DBHost:        os.Getenv("DB_HOST"),
+		DBPort:        os.Getenv("DB_PORT"),
+		DBUser:        os.Getenv("DB_USER"),
+		DBPassword:    os.Getenv("DB_PASSWORD"),
+		DBName:        os.Getenv("DB_DBNAME"),
+		DBNameTenant:  os.Getenv("DB_DBNAME_TENANT"),
+		RsaPrivateKey: os.Getenv("RSA_PRIVATE_KEY"),
+		RsaPublicKey:  os.Getenv("RSA_PUBLIC_KEY"),
 	}
 
 	// if config.AppName == "" {

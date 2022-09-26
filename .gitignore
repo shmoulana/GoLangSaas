@@ -5,4 +5,4 @@
 # File
 .env
 __debug_bin
-example.db
+*.db

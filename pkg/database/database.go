@@ -18,6 +18,9 @@ type DatabaseRepo interface {
 	Connect(ctx context.Context) (*sgorm.DbProvider, error)
 	GetDB(ctx context.Context) (*gorm.DB, error)
 	GetDSN() DatabaseDSN
+	GetTenantDSN(ctx context.Context, tenantInfo saas.TenantInfo) string
+	GetDriver() string
+	CreateDatabase(ctx context.Context, dbName string) error
 }
 
 type DatabaseDSN struct {

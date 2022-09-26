@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"strings"
 
 	"github.com/go-saas/saas"
 	"github.com/go-saas/saas/data"
@@ -91,6 +92,20 @@ func (d SQLiteDriver) GetDB(ctx context.Context) (*gorm.DB, error) {
 
 func (d SQLiteDriver) GetDSN() DatabaseDSN {
 	return d.DSN
+}
+
+func (d SQLiteDriver) GetTenantDSN(ctx context.Context, tenantInfo saas.TenantInfo) string {
+	t3Conn, _ := d.DSN.TenantDSN.Gen(ctx, tenantInfo)
+
+	return strings.ReplaceAll(t3Conn, "-", "_")
+}
+
+func (d SQLiteDriver) GetDriver() string {
+	return "sqlite3"
+}
+
+func (d SQLiteDriver) CreateDatabase(ctx context.Context, dbName string) error {
+	return nil
 }
 
 func NewSQLLiteDriver() DatabaseRepo {
