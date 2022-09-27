@@ -8,6 +8,7 @@ import (
 )
 
 type Config struct {
+	AppPort       string
 	DBDriver      string
 	DBHost        string
 	DBPort        string
@@ -28,6 +29,7 @@ func Init() {
 	}
 
 	config = &Config{
+		AppPort:       os.Getenv("APP_PORT"),
 		DBDriver:      os.Getenv("DB_DRIVER"),
 		DBHost:        os.Getenv("DB_HOST"),
 		DBPort:        os.Getenv("DB_PORT"),

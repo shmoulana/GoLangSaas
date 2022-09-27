@@ -20,6 +20,6 @@ func StartServer(conf configs.Config) {
 
 	route.InitRouter()
 
-	r.Run(":8086")
+	r.Run(":" + conf.AppPort)
 	return
 }
