@@ -29,7 +29,7 @@ func Init() {
 	}
 
 	config = &Config{
-		AppPort:       os.Getenv("APP_PORT"),
+		AppPort:       os.Getenv("PORT"),
 		DBDriver:      os.Getenv("DB_DRIVER"),
 		DBHost:        os.Getenv("DB_HOST"),
 		DBPort:        os.Getenv("DB_PORT"),
