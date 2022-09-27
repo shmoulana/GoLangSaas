@@ -49,9 +49,20 @@ func Init() {
 	// 	log.Panicf("[Init] app address cannot be empty")
 	// }
 
-	if config.DBDriver == "" || config.DBHost == "" || config.DBPort == "" || config.DBName == "" || config.DBNameTenant == "" {
-		log.Panicf("[Init] db name or address or db driver or db name tenant cannot be empty")
+	if config.DBDriver == "" {
+		log.Panicf("[Init] db driver cannot be empty")
 	}
+
+	if config.DBDriver == "sqlite3" {
+		if config.DBName == "" || config.DBNameTenant == "" {
+			log.Panicf("[Init] db name  db name tenant cannot be empty")
+		}
+	} else {
+		if config.DBDriver == "" || config.DBHost == "" || config.DBPort == "" || config.DBName == "" || config.DBNameTenant == "" {
+			log.Panicf("[Init] db name or address or db name tenant cannot be empty")
+		}
+	}
+
 }
 
 func Get() *Config {
