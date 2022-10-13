@@ -6,12 +6,22 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/shmoulana/Redios/internal/repository"
+	"github.com/shmoulana/Redios/internal/service/logger"
 	"github.com/shmoulana/Redios/pkg/database"
 	"github.com/shmoulana/Redios/pkg/dto"
 )
 
 type TenantService struct {
 	TenantRepository repository.TenantRepository
+	LoggerService    logger.LoggerService
+}
+
+func (s TenantService) Name() string {
+	return "TenantService"
+}
+
+func (s TenantService) Type() string {
+	return "Service"
 }
 
 func (s TenantService) CreateTenant(ctx context.Context, payload dto.TenantRequestV1) error {
@@ -21,12 +31,11 @@ func (s TenantService) CreateTenant(ctx context.Context, payload dto.TenantReque
 		DisplayName: payload.Name,
 	}
 
-	lastInsertedId, err := s.TenantRepository.CreateTenant(ctx, *t, payload.SeparateDb)
+	_, err := s.TenantRepository.CreateTenant(ctx, *t, payload.SeparateDb)
 	if err != nil {
+		s.LoggerService.Error(s, err, "Failed to create tenant")
 		return nil
 	}
-
-	fmt.Printf(*lastInsertedId)
 
 	return nil
 }
@@ -34,6 +43,7 @@ func (s TenantService) CreateTenant(ctx context.Context, payload dto.TenantReque
 func (s TenantService) UpdateTenant(ctx context.Context, id string, payload dto.TenantRequestV1) (*string, error) {
 	tenant, err := s.TenantRepository.FindById(ctx, id)
 	if err != nil {
+		s.LoggerService.Error(s, err, fmt.Sprintf("Failed find tenant by id=%s", id))
 		return nil, err
 	}
 
@@ -41,6 +51,7 @@ func (s TenantService) UpdateTenant(ctx context.Context, id string, payload dto.
 
 	_, err = s.TenantRepository.UpdateTenant(ctx, *tenant)
 	if err != nil {
+		s.LoggerService.Error(s, err, "Failed to update tenant")
 		return nil, err
 	}
 
@@ -50,6 +61,7 @@ func (s TenantService) UpdateTenant(ctx context.Context, id string, payload dto.
 func (s TenantService) GetTenants(ctx context.Context) ([]database.Tenant, error) {
 	tenants, err := s.TenantRepository.Find(ctx)
 	if err != nil {
+		s.LoggerService.Error(s, err, "Failed to find tenants")
 		return nil, err
 	}
 
@@ -59,6 +71,7 @@ func (s TenantService) GetTenants(ctx context.Context) ([]database.Tenant, error
 func (s TenantService) GetTenantById(ctx context.Context, id string) (*database.Tenant, error) {
 	tenant, err := s.TenantRepository.FindById(ctx, id)
 	if err != nil {
+		s.LoggerService.Error(s, err, fmt.Sprintf("Failed find tenant by id=%s", id))
 		return nil, err
 	}
 
@@ -68,11 +81,13 @@ func (s TenantService) GetTenantById(ctx context.Context, id string) (*database.
 func (s TenantService) DeleteTenant(ctx context.Context, id string) (*string, error) {
 	tenant, err := s.TenantRepository.FindById(ctx, id)
 	if err != nil {
+		s.LoggerService.Error(s, err, fmt.Sprintf("Failed find tenant by id=%s", id))
 		return nil, err
 	}
 
 	_, err = s.TenantRepository.DeleteTenant(ctx, *tenant)
 	if err != nil {
+		s.LoggerService.Error(s, err, "Failed to delete tenant ")
 		return nil, err
 	}
 

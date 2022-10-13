@@ -15,6 +15,7 @@ import (
 	"github.com/shmoulana/Redios/configs"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 )
 
 type PostgreDriver struct {
@@ -42,7 +43,9 @@ func (d PostgreDriver) Connect(ctx context.Context) (*sgorm.DbProvider, error) {
 
 			client, err = gorm.Open(postgres.New(postgres.Config{
 				DSN: psqlInfo,
-			}))
+			}), &gorm.Config{
+				Logger: logger.Default.LogMode(logger.Silent),
+			})
 
 			return sgorm.NewDbWrap(client), err
 		})
@@ -51,7 +54,7 @@ func (d PostgreDriver) Connect(ctx context.Context) (*sgorm.DbProvider, error) {
 			return nil, err
 		}
 
-		return client.WithContext(ctx).Debug(), err
+		return client.WithContext(ctx), err
 	})
 
 	tenantStore := &TenantStore{dbProvider: sgorm.NewDbProvider(conn, clientProvider)}
@@ -109,7 +112,9 @@ func (d PostgreDriver) CreateDatabase(ctx context.Context, id string) error {
 
 	db, err := gorm.Open(postgres.New(postgres.Config{
 		DSN: psqlInfo,
-	}), &gorm.Config{})
+	}), &gorm.Config{
+		Logger: logger.Default.LogMode(logger.Silent),
+	})
 	if err != nil {
 		return err
 	}
@@ -162,7 +167,9 @@ func NewPostgreDriver(conf configs.Config) DatabaseRepo {
 
 	db, err := gorm.Open(postgres.New(postgres.Config{
 		DSN: psqlInfo,
-	}), &gorm.Config{})
+	}), &gorm.Config{
+		Logger: logger.Default.LogMode(logger.Silent),
+	})
 	if err != nil {
 		panic(err)
 	}

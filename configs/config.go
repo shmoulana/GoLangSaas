@@ -8,16 +8,29 @@ import (
 )
 
 type Config struct {
-	AppPort       string
-	DBDriver      string
-	DBHost        string
-	DBPort        string
-	DBUser        string
-	DBPassword    string
-	DBName        string
-	DBNameTenant  string
+	AppPort string
+
+	DBDriver string
+
+	DBHost       string
+	DBPort       string
+	DBUser       string
+	DBPassword   string
+	DBName       string
+	DBNameTenant string
+
 	RsaPrivateKey string
 	RsaPublicKey  string
+
+	RedisPort     string
+	RedisHostname string
+	RedisPassword string
+	RedisDatabase string
+
+	EmailHost     string
+	EmailFrom     string
+	EmailPassword string
+	EmailPort     string
 }
 
 var config *Config
@@ -29,16 +42,28 @@ func Init() {
 	}
 
 	config = &Config{
-		AppPort:       os.Getenv("PORT"),
-		DBDriver:      os.Getenv("DB_DRIVER"),
-		DBHost:        os.Getenv("DB_HOST"),
-		DBPort:        os.Getenv("DB_PORT"),
-		DBUser:        os.Getenv("DB_USER"),
-		DBPassword:    os.Getenv("DB_PASSWORD"),
-		DBName:        os.Getenv("DB_DBNAME"),
-		DBNameTenant:  os.Getenv("DB_DBNAME_TENANT"),
+		AppPort: os.Getenv("PORT"),
+
+		DBDriver:     os.Getenv("DB_DRIVER"),
+		DBHost:       os.Getenv("DB_HOST"),
+		DBPort:       os.Getenv("DB_PORT"),
+		DBUser:       os.Getenv("DB_USER"),
+		DBPassword:   os.Getenv("DB_PASSWORD"),
+		DBName:       os.Getenv("DB_DBNAME"),
+		DBNameTenant: os.Getenv("DB_DBNAME_TENANT"),
+
 		RsaPrivateKey: os.Getenv("RSA_PRIVATE_KEY"),
 		RsaPublicKey:  os.Getenv("RSA_PUBLIC_KEY"),
+
+		RedisPort:     os.Getenv("REDIS_PORT"),
+		RedisHostname: os.Getenv("REDIS_HOSTNAME"),
+		RedisPassword: os.Getenv("REDIS_PASSWORD"),
+		RedisDatabase: os.Getenv("REDIS_DATABASE"),
+
+		EmailHost:     os.Getenv("EMAIL_HOST"),
+		EmailFrom:     os.Getenv("EMAIL_FROM"),
+		EmailPassword: os.Getenv("EMAIL_PASSWORD"),
+		EmailPort:     os.Getenv("EMAIL_PORT"),
 	}
 
 	// if config.AppName == "" {

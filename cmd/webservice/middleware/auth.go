@@ -2,9 +2,11 @@ package middleware
 
 import (
 	"encoding/json"
+	"fmt"
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	"github.com/go-redis/redis/v8"
 	"github.com/shmoulana/Redios/cmd/webservice/handler"
 	"github.com/shmoulana/Redios/internal/constant"
 	"github.com/shmoulana/Redios/internal/model"
@@ -40,6 +42,22 @@ func (m Middleware) Authorization(c *gin.Context) {
 
 	err = json.Unmarshal([]byte(userStr.(string)), &user)
 	if err != nil {
+		handler.WriteErrorResponse(c, err)
+		return
+	}
+
+	key := fmt.Sprintf(constant.RedisTokenKey, user.ID)
+
+	redisToken, err := m.Redis.Get(c, key).Result()
+	if err == redis.Nil {
+		err = errors.ErrAuthTokenExpired
+
+		handler.WriteErrorResponse(c, err)
+		return
+	}
+
+	if redisToken != token {
+		err = errors.ErrUnauthorized
 		handler.WriteErrorResponse(c, err)
 		return
 	}

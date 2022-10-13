@@ -12,6 +12,7 @@ import (
 	"github.com/go-saas/saas/seed"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 )
 
 type SQLiteDriver struct {
@@ -44,6 +45,8 @@ func (d SQLiteDriver) Connect(ctx context.Context) (*sgorm.DbProvider, error) {
 				DriverName: sqlite.DriverName,
 				DSN:        s,
 				Conn:       db,
+			}, &gorm.Config{
+				Logger: logger.Default.LogMode(logger.Silent),
 			})
 
 			return sgorm.NewDbWrap(client), err
@@ -53,7 +56,7 @@ func (d SQLiteDriver) Connect(ctx context.Context) (*sgorm.DbProvider, error) {
 			return nil, err
 		}
 
-		return client.WithContext(ctx).Debug(), err
+		return client.WithContext(ctx), err
 	})
 
 	tenantStore := &TenantStore{dbProvider: sgorm.NewDbProvider(conn, clientProvider)}
