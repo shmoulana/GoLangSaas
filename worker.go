@@ -13,7 +13,7 @@ import (
 	"github.com/shmoulana/Redios/internal/service/worker"
 )
 
-func main() {
+func mainWorker() {
 	// var max
 
 	configs.Init()
