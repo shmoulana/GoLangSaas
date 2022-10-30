@@ -4,6 +4,7 @@ package main
 import (
 	"context"
 	_ "expvar"
+	"flag"
 	"fmt"
 	_ "net/http/pprof"
 	"time"
@@ -14,19 +15,22 @@ import (
 )
 
 func main() {
-	// var max
+	var (
+		maxWorkers   = flag.Int("max_workers", 5, "The number of workers to start")
+		maxQueueSize = flag.Int("max_queue_size", 100, "The size of job queue")
+	)
+
+	flag.Parse()
+
+	// Create the job queue.
+	jobQueue := make(chan worker.Job, *maxQueueSize)
+
+	// Start the dispatcher.
+	dispatcher := worker.NewDispatcher(jobQueue, *maxWorkers)
+	dispatcher.Run()
 
 	configs.Init()
 	conf := configs.Get()
-
-	// Create the job queue.
-	// Max Queue Size Default - 100
-	jobQueue := make(chan worker.Job, 100)
-
-	// Start the dispatcher.
-	// Max Workers Default - 3
-	dispatcher := worker.NewDispatcher(jobQueue, 3)
-	dispatcher.Run()
 
 	factory := internal.Transport{}
 	queueService := factory.GetQueueService(*conf)
@@ -74,6 +78,14 @@ func main() {
 			}
 		}
 
+		// fmt.Println("All jobs done")
+
 		time.Sleep(10 * time.Second)
 	}
+
+	// // Start the HTTP handler.
+	// http.HandleFunc("/work", func(w http.ResponseWriter, r *http.Request) {
+	// 	requestHandler(w, r, jobQueue)
+	// })
+	// log.Fatal(http.ListenAndServe(":"+*port, nil))
 }

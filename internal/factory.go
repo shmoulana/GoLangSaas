@@ -7,6 +7,7 @@ import (
 	"github.com/shmoulana/Redios/configs"
 	"github.com/shmoulana/Redios/internal/repository"
 	"github.com/shmoulana/Redios/internal/service"
+	"github.com/shmoulana/Redios/internal/service/email"
 	"github.com/shmoulana/Redios/internal/service/logger"
 	"github.com/shmoulana/Redios/internal/service/queue"
 	"github.com/shmoulana/Redios/pkg/database"
@@ -16,11 +17,15 @@ import (
 )
 
 type Transport struct {
-	tenantService *service.TenantService
-	userService   *service.UserService
+	tenantService    *service.TenantService
+	userService      *service.UserService
+	emailTestService *service.EmailTestService
+
 	cryptService  *crypt.CryptService
 	queueService  *queue.QueueService
+	workerPool    *queue.WorkerPool
 	loggerService *logger.LoggerService
+	emailService  *email.EmailService
 
 	databaseRepo      *database.DatabaseRepo
 	middlewareService *middleware.Middleware
@@ -53,6 +58,7 @@ func (t Transport) GetMiddleware(conf configs.Config) middleware.Middleware {
 	if t.middlewareService == nil {
 		middlewareService := middleware.Middleware{
 			CryptService: t.GetCryptService(conf),
+			Redis:        t.GetRedis(conf),
 		}
 
 		t.middlewareService = &middlewareService
@@ -82,6 +88,19 @@ func (t Transport) GetElasticsearch(conf configs.Config) *elasticsearch.Client {
 	}
 
 	return t.elasticClient
+}
+
+func (t Transport) GetWorkerPool(conf configs.Config) queue.WorkerPool {
+	if t.workerPool == nil {
+		workerPool := queue.WorkerPool{
+			QueueService:  t.GetQueueService(conf),
+			LoggerService: t.GetLoggerService(conf),
+		}
+
+		t.workerPool = &workerPool
+	}
+
+	return *t.workerPool
 }
 
 // ---------------- Service
@@ -147,6 +166,35 @@ func (t Transport) GetLoggerService(conf configs.Config) logger.LoggerService {
 	}
 
 	return *t.loggerService
+}
+
+func (t Transport) GetEmailService(conf configs.Config) email.EmailService {
+	if t.emailService == nil {
+		emailService := email.EmailService{
+			Config:       conf,
+			Redis:        t.GetRedis(conf),
+			QueueService: t.GetQueueService(conf),
+			// TemplateRespository: t.ge,
+		}
+
+		// emailService.Init()
+
+		t.emailService = &emailService
+	}
+
+	return *t.emailService
+}
+
+func (t Transport) GetEmailTestService(conf configs.Config) service.EmailTestService {
+	if t.emailTestService == nil {
+		emailService := service.EmailTestService{
+			EmailService: t.GetEmailService(conf),
+		}
+
+		t.emailTestService = &emailService
+	}
+
+	return *t.emailTestService
 }
 
 // ---------------- Repository

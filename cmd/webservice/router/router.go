@@ -8,25 +8,28 @@ import (
 )
 
 type Router struct {
-	r             *gin.Engine
-	tenantService service.TenantService
-	userService   service.UserService
-	middleware    middleware.Middleware
+	r                *gin.Engine
+	tenantService    service.TenantService
+	userService      service.UserService
+	emailTestService service.EmailTestService
+	middleware       middleware.Middleware
 }
 
 type NewRouterParams struct {
-	R             *gin.Engine
-	TenantService service.TenantService
-	UserService   service.UserService
-	Middleware    middleware.Middleware
+	R                *gin.Engine
+	TenantService    service.TenantService
+	UserService      service.UserService
+	EmailTestService service.EmailTestService
+	Middleware       middleware.Middleware
 }
 
 func NewRouter(params NewRouterParams) Router {
 	return Router{
-		r:             params.R,
-		tenantService: params.TenantService,
-		userService:   params.UserService,
-		middleware:    params.Middleware,
+		r:                params.R,
+		tenantService:    params.TenantService,
+		userService:      params.UserService,
+		emailTestService: params.EmailTestService,
+		middleware:       params.Middleware,
 	}
 }
 
@@ -45,4 +48,9 @@ func (h *Router) InitRouter() {
 	authPath.GET(TenantWithIdPath, handler.GetTenantByIdHandler(h.tenantService.GetTenantById))
 	authPath.PUT(TenantWithIdPath, handler.UpdateTenantHandler(h.tenantService.UpdateTenant))
 	authPath.DELETE(TenantWithIdPath, handler.DeleteTenantHandler(h.tenantService.DeleteTenant))
+
+	authPath.POST(EmailTestNowPath, handler.HandlerEmailTestNow(h.emailTestService.EmailTestNow))
+	authPath.POST(EmailTestQueuePath, handler.HandlerEmailTestQueue(h.emailTestService.EmailTestQueue))
+	authPath.POST(EmailNowPath, handler.HandlerEmailNow(h.emailTestService.EmailNow))
+	authPath.POST(EmailQueuePath, handler.HandlerEmailQueue(h.emailTestService.EmailQueue))
 }

@@ -12,10 +12,11 @@ func StartServer(conf configs.Config) {
 	fac := internal.Transport{}
 
 	route := router.NewRouter(router.NewRouterParams{
-		R:             r,
-		TenantService: fac.GetTenantService(conf),
-		UserService:   fac.GetUserService(conf),
-		Middleware:    fac.GetMiddleware(conf),
+		R:                r,
+		TenantService:    fac.GetTenantService(conf),
+		UserService:      fac.GetUserService(conf),
+		EmailTestService: fac.GetEmailTestService(conf),
+		Middleware:       fac.GetMiddleware(conf),
 	})
 
 	route.InitRouter()

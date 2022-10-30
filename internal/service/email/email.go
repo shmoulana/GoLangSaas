@@ -2,15 +2,17 @@ package email
 
 import (
 	"context"
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
-	"net/smtp"
 
 	"github.com/go-redis/redis/v8"
 	"github.com/shmoulana/Redios/configs"
 	"github.com/shmoulana/Redios/internal/constant"
 	"github.com/shmoulana/Redios/internal/repository"
 	"github.com/shmoulana/Redios/internal/service/queue"
+	"github.com/shmoulana/Redios/pkg/utils"
+	"gopkg.in/gomail.v2"
 )
 
 type EmailService struct {
@@ -20,18 +22,28 @@ type EmailService struct {
 	QueueService        queue.QueueService
 }
 
-type queueValue struct {
+type EmailJobValue struct {
 	To  []string
 	Msg string
 }
 
-var auth smtp.Auth
+// var auth smtp.Auth
+var d *gomail.Dialer
 
-func (s EmailService) SendNow(ctx context.Context, to []string, msg []byte) error {
-	auth = smtp.PlainAuth("", s.Config.EmailFrom, s.Config.EmailPassword, s.Config.EmailHost)
-	addr := fmt.Sprintf("%s:%s", s.Config.EmailHost, s.Config.EmailPort)
+func (s EmailService) SendNow(ctx context.Context, to []string, msg string) error {
+	message := gomail.NewMessage()
+	message.SetHeader("From", "test@example.com")
+	message.SetHeader("To", to...)
+	message.SetHeader("Subject", "test subject")
+	message.SetBody("text/html", msg)
 
-	err := smtp.SendMail(addr, auth, s.Config.EmailFrom, to, msg)
+	_, err := d.Dial()
+	if err != nil {
+		return err
+	}
+
+	err = d.DialAndSend(message)
+
 	if err != nil {
 		return err
 	}
@@ -39,7 +51,7 @@ func (s EmailService) SendNow(ctx context.Context, to []string, msg []byte) erro
 	return nil
 }
 
-func (s EmailService) Send(ctx context.Context, to []string, msg []byte) error {
+func (s EmailService) Send(ctx context.Context, to []string, msg string) error {
 	var canBeQueued bool = true
 
 	redisStatus := s.Redis.Ping(ctx)
@@ -48,7 +60,7 @@ func (s EmailService) Send(ctx context.Context, to []string, msg []byte) error {
 	}
 
 	if canBeQueued {
-		b, err := json.Marshal(queueValue{
+		b, err := json.Marshal(EmailJobValue{
 			To:  to,
 			Msg: string(msg),
 		})
@@ -76,4 +88,9 @@ func (s EmailService) Send(ctx context.Context, to []string, msg []byte) error {
 	}
 
 	return nil
+}
+
+func (s EmailService) Init() {
+	d = gomail.NewDialer(s.Config.EmailHost, utils.StringToInt(s.Config.EmailPort, 0), s.Config.EmailUsername, s.Config.EmailPassword)
+	d.TLSConfig = &tls.Config{InsecureSkipVerify: true}
 }

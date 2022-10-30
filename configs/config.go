@@ -28,7 +28,7 @@ type Config struct {
 	RedisDatabase string
 
 	EmailHost     string
-	EmailFrom     string
+	EmailUsername string
 	EmailPassword string
 	EmailPort     string
 }
@@ -61,7 +61,7 @@ func Init() {
 		RedisDatabase: os.Getenv("REDIS_DATABASE"),
 
 		EmailHost:     os.Getenv("EMAIL_HOST"),
-		EmailFrom:     os.Getenv("EMAIL_FROM"),
+		EmailUsername: os.Getenv("EMAIL_USERNAME"),
 		EmailPassword: os.Getenv("EMAIL_PASSWORD"),
 		EmailPort:     os.Getenv("EMAIL_PORT"),
 	}
