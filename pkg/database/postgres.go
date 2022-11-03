@@ -107,11 +107,11 @@ func (d PostgreDriver) GetTenantDSN(ctx context.Context, tenantInfo saas.TenantI
 
 func (d PostgreDriver) CreateDatabase(ctx context.Context, id string) error {
 	//open without db name
-	psqlInfo := fmt.Sprintf("host=%s port=%s user=%s "+
-		"password=%s sslmode=disable", d.conf.DBHost, d.conf.DBPort, d.conf.DBUser, d.conf.DBPassword)
+	// psqlInfo := fmt.Sprintf("host=%s port=%s user=%s "+
+	// 	"password=%s sslmode=disable", d.conf.DBHost, d.conf.DBPort, d.conf.DBUser, d.conf.DBPassword)
 
 	db, err := gorm.Open(postgres.New(postgres.Config{
-		DSN: psqlInfo,
+		DSN: d.DSN.SharedDSN,
 	}), &gorm.Config{
 		Logger: logger.Default.LogMode(logger.Silent),
 	})
@@ -161,38 +161,37 @@ func NewPostgreDriver(conf configs.Config) DatabaseRepo {
 		TenantDSN: connStrGen,
 	}
 
-	//open without db name
-	psqlInfo = fmt.Sprintf("host=%s port=%s user=%s "+
-		"password=%s sslmode=disable", conf.DBHost, conf.DBPort, conf.DBUser, conf.DBPassword)
+	// //open without db name
+	// psqlInfo = fmt.Sprintf("host=%s port=%s user=%s password=%s sslmode=disable dbname=%s", conf.DBHost, conf.DBPort, conf.DBUser, conf.DBPassword, "")
 
-	db, err := gorm.Open(postgres.New(postgres.Config{
-		DSN: psqlInfo,
-	}), &gorm.Config{
-		Logger: logger.Default.LogMode(logger.Silent),
-	})
-	if err != nil {
-		panic(err)
-	}
+	// db, err := gorm.Open(postgres.New(postgres.Config{
+	// 	DSN: psqlInfo,
+	// }), &gorm.Config{
+	// 	Logger: logger.Default.LogMode(logger.Silent),
+	// })
+	// if err != nil {
+	// 	panic(err)
+	// }
 
-	var column *string
+	// var column *string
 
-	// Find database if not exist return create database query
-	result := db.Raw(fmt.Sprintf("SELECT 'CREATE DATABASE %s' as column WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = '%s')", conf.DBName, conf.DBName))
-	err = result.Error
-	if err != nil {
-		if err != sql.ErrNoRows {
-			panic(err)
-		}
-	}
+	// // Find database if not exist return create database query
+	// result := db.Raw(fmt.Sprintf("SELECT 'CREATE DATABASE %s' as column WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = '%s')", conf.DBName, conf.DBName))
+	// err = result.Error
+	// if err != nil {
+	// 	if err != sql.ErrNoRows {
+	// 		panic(err)
+	// 	}
+	// }
 
-	result.Scan(&column)
+	// result.Scan(&column)
 
-	if column != nil {
-		result := db.Exec(*column)
-		if result.Error != nil {
-			panic(result.Error)
-		}
-	}
+	// if column != nil {
+	// 	result := db.Exec(*column)
+	// 	if result.Error != nil {
+	// 		panic(result.Error)
+	// 	}
+	// }
 
 	return PostgreDriver{
 		DSN:          dsn,

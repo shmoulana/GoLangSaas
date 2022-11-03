@@ -177,7 +177,7 @@ func (t Transport) GetEmailService(conf configs.Config) email.EmailService {
 			// TemplateRespository: t.ge,
 		}
 
-		// emailService.Init()
+		emailService.Init()
 
 		t.emailService = &emailService
 	}
