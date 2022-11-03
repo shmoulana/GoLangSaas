@@ -3,6 +3,7 @@ package configs
 import (
 	"log"
 	"os"
+	"strings"
 
 	"github.com/joho/godotenv"
 )
@@ -31,6 +32,10 @@ type Config struct {
 	EmailUsername string
 	EmailPassword string
 	EmailPort     string
+
+	ElasticUrls     []string
+	ElasticUser     string
+	ElasticPassword string
 }
 
 var config *Config
@@ -40,6 +45,9 @@ func Init() {
 	if err != nil {
 		log.Printf("[Init] error on loading env from file: %+v", err)
 	}
+	var elasticUrls string
+
+	elasticUrls = os.Getenv("ELASTIC_URLS")
 
 	config = &Config{
 		AppPort: os.Getenv("PORT"),
@@ -64,6 +72,10 @@ func Init() {
 		EmailUsername: os.Getenv("EMAIL_USERNAME"),
 		EmailPassword: os.Getenv("EMAIL_PASSWORD"),
 		EmailPort:     os.Getenv("EMAIL_PORT"),
+
+		ElasticUrls:     strings.Split(elasticUrls, ","),
+		ElasticUser:     os.Getenv("ELASTIC_USER"),
+		ElasticPassword: os.Getenv("ELASTIC_PASSWORD"),
 	}
 
 	// if config.AppName == "" {

@@ -7,7 +7,9 @@ import (
 
 func NewClient(conf configs.Config) (*elasticsearch.Client, error) {
 	es, err := elasticsearch.NewClient(elasticsearch.Config{
-		Addresses: []string{"http://localhost:9200"},
+		Addresses: conf.ElasticUrls,
+		Username:  conf.ElasticUser,
+		Password:  conf.ElasticPassword,
 	})
 	if err != nil {
 		return nil, err
